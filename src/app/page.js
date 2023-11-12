@@ -1,95 +1,65 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+import BlogLists from "@/components/Home/BlogLists";
+import Hero from "@/components/Home/Hero";
+import Latest from "@/components/Home/Latest";
+import ServiceLists from "@/components/Home/ServiceLists";
+import FrontEndLayout from "@/components/Master/FrontEndLayout";
+import { PrismaClient } from "@prisma/client";
 
-export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+const prismaClient = new PrismaClient();
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+async function getData() {
+  let sliders = await prismaClient.blog.findMany({
+    where: { type: "slider" },
+  });
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+  let featureds = await prismaClient.blog.findMany({
+    where: { type: "featured" },
+  });
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+  let populars = await prismaClient.blog.findMany({
+    where: { type: "popular" },
+  });
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
+  let latestBlogs = await prismaClient.blog.findMany({
+    orderBy: { id: "desc" },
+    take: 2,
+  });
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+  let latestServices = await prismaClient.service.findMany({
+    orderBy: { id: "desc" },
+    take: 2,
+  });
+
+  let blogs = await prismaClient.blog.findMany();
+
+  let services = await prismaClient.service.findMany();
+
+  return {
+    sliders,
+    featureds,
+    populars,
+    blogs,
+    services,
+    latestBlogs,
+    latestServices,
+  };
 }
+
+const Page = async () => {
+  const data = await getData();
+
+  return (
+    <FrontEndLayout>
+      <Hero featureds={data["featureds"]} sliders={data["sliders"]} />
+      <div className="container mt-5">
+        <Latest
+          latestBlogs={data.latestBlogs}
+          latestServices={data.latestServices}
+        />
+        <BlogLists blogs={data.blogs} />
+        <ServiceLists services={data.services} />
+      </div>
+    </FrontEndLayout>
+  );
+};
+export default Page;
